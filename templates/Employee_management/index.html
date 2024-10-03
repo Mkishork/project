@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align:center;
+        }
+        h1 {
+            text-align: center;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            margin-right: 10px;
+        }
+        input, button, select {
+            margin-bottom: 10px;
+            padding: 8px;
+        }
+        #employee-list, #attendance-list, #department-attendance-list {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Employee Management System</h1>
+
+    <!-- Add Employee Form -->
+    <h2>Add New Employee</h2>
+    <form id="add-employee-form">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required><br>
+
+        <label for="destination">Destination:</label>
+        <input type="text" id="destination" name="destination" required><br>
+
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date"><br>
+
+        <button type="button" onclick="addEmployee()">Add Employee</button>
+    </form>
+
+    <!-- Mark Attendance Form -->
+    <h2>Mark Attendance</h2>
+    <form id="mark-attendance-form">
+        <label for="employee-id">Employee ID:</label>
+        <input type="number" id="employee-id" name="employee-id" required><br>
+
+        <label for="status">Status:</label>
+        <select id="status" name="status" required>
+            <option value="Present">Present</option>
+            <option value="Absent">Absent</option>
+        </select><br>
+
+        <button type="button" onclick="markAttendance()">Mark Attendance</button>
+    </form>
+
+    <!-- View All Employees -->
+    <h2>View All Employees</h2>
+    <button type="button" onclick="fetchEmployees()">Load Employees</button>
+    <div id="employee-list" class="hidden">
+        <table id="employee-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Destination</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- View All Attendance -->
+    <h2>View All Attendance</h2>
+    <button type="button" onclick="fetchAttendance()">Load Attendance</button>
+    <div id="attendance-list" class="hidden">
+        <table id="attendance-table">
+            <thead>
+                <tr>
+                    <th>Employee ID</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Fetch Department Attendance -->
+    <h2>View Department Attendance</h2>
+    <form id="department-attendance-form">
+        <label for="department">Department:</label>
+        <input type="text" id="department" name="department" required><br>
+        <button type="button" onclick="fetchDepartmentAttendance()">Fetch Department Attendance</button>
+    </form>
+    <div id="department-attendance-list" class="hidden">
+        <table id="department-attendance-table">
+            <thead>
+                <tr>
+                    <th>Employee ID</th>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        // Function to add a new employee using AJAX
+        function addEmployee() {
+            const name = document.getElementById('name').value;
+            const destination = document.getElementById('destination').value;
+            const date = document.getElementById('date').value;
+
+            if (name && destination) {
+                const url = `/add/?name=${name}&destination=${destination}&date=${date}`;
+                fetch(url)
+                    .then(response => {
+                        if (response.ok) {
+                            alert("Employee added successfully!");
+                            document.getElementById('add-employee-form').reset();
+                        } else {
+                            alert("Failed to add employee.");
+                        }
+                    });
+            } else {
+                alert("Please fill in all required fields.");
+            }
+        }
+
+        // Function to mark attendance using AJAX
+        function markAttendance() {
+            const employeeId = document.getElementById('employee-id').value;
+            const status = document.getElementById('status').value;
+
+            const url = `/attendance/mark/${employeeId}/${status}`;
+            fetch(url)
+                .then(response => {
+                    if (response.ok) {
+                        alert("Attendance marked successfully!");
+                        document.getElementById('mark-attendance-form').reset();
+                    } else {
+                        alert("Failed to mark attendance.");
+                    }
+                });
+        }
+
+        // Function to fetch and display all employees
+        function fetchEmployees() {
+            const url = '/get/';
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const employeeTable = document.getElementById('employee-table').querySelector('tbody');
+                    employeeTable.innerHTML = ''; // Clear the table before loading new data
+
+                    data.forEach(employee => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${employee.id}</td>
+                            <td>${employee.name}</td>
+                            <td>${employee.destination}</td>
+                            <td>${employee.date}</td>
+                        `;
+                        employeeTable.appendChild(row);
+                    });
+
+                    document.getElementById('employee-list').classList.remove('hidden');
+                });
+        }
+
+        // Function to fetch and display all attendance records
+        function fetchAttendance() {
+            const url = '/attendance/get/';
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const attendanceTable = document.getElementById('attendance-table').querySelector('tbody');
+                    attendanceTable.innerHTML = ''; // Clear the table before loading new data
+
+                    data.forEach(attendance => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${attendance.employee_id}</td>
+                            <td>${attendance.date}</td>
+                            <td>${attendance.status}</td>
+                        `;
+                        attendanceTable.appendChild(row);
+                    });
+
+                    document.getElementById('attendance-list').classList.remove('hidden');
+                });
+        }
+
+        // Function to fetch attendance by department
+        function fetchDepartmentAttendance() {
+            const department = document.getElementById('department').value;
+            console.log(department);
+            if (department) {
+                const url = `/attendance/get/${department}/`;
+                console.log(url);
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        const departmentAttendanceTable = document.getElementById('department-attendance-table').querySelector('tbody');
+                        departmentAttendanceTable.innerHTML = ''; // Clear the table before loading new data
+
+                        data.forEach(record => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${record.employee_id__id}</td>
+                                <td>${record.employee_id__name}</td>
+                                <td>${record.date}</td>
+                                <td>${record.status}</td>
+                            `;
+                            departmentAttendanceTable.appendChild(row);
+                        });
+
+                        document.getElementById('department-attendance-list').classList.remove('hidden');
+                    });
+            } else {
+                alert("Please enter a department name.");
+            }
+        }
+    </script>
+
+</body>
+</html>
